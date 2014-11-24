@@ -1,9 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title></title>
+  <title>Angular Reftracker Tester</title>
+  <meta charset="utf-8">
+
+  <!-- AngularJS -->
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.27/angular.min.js"></script>
+  <script type="text/javascript" src="https://code.angularjs.org/1.2.27/angular-resource.min.js"></script>
+
+  <!-- Tester module -->
+  <script type="text/javascript" src="../src/angular-reftracker.js"></script>
+  <script type="text/javascript" src="js/reftracker-tester.js"></script>
+
+  <!-- Some styles and ui stuff -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+  <script type="text/javascript" src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.12.0.min.js"></script>
+
 </head>
 <body>
+
+<div class="container" ng-app="rtTester">
+
+  <div class="row">
+    <div class="col-md-12">
+      <h1>Angular Reftracker Tester</h1>
+    </div>
+  </div>
+
+  <div class="row">
+
+    <div class="col-md-6" ng-controller="listController">
+      <h3>Objects structure</h3>
+    </div>
+
+    <div class="col-md-6">
+      <h3>Objects editor</h3>
+    </div>
+
+  </div>
+
+</div>
 
 </body>
 </html>
