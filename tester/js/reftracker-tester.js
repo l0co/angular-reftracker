@@ -17,7 +17,14 @@ function($scope, $resource) {
     });
 
     $scope.add = function(item) {
-
+        $scope.items.push(item);
     }
 
+}]);
+
+rtTester.controller('editController',
+['$scope', '$resource',
+function($scope, $resource) {
+    // item goes from parent scope here, we use it to create separate reference in this controller
+    $scope.element = $scope.item;
 }]);

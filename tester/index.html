@@ -15,6 +15,7 @@
   <!-- Some styles and ui stuff -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="index.css">
   <script type="text/javascript" src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.12.0.min.js"></script>
 
 </head>
@@ -30,23 +31,76 @@
 
   <div class="row">
 
-    <div class="col-md-6" ng-controller="listController">
-      <h4>Objects structure <span class="label label-default">Single scope</span></h4>
+    <div class="col-md-5">
+      <h4>Objects structure <span class="label label-default">Single scope</span></h4><br/>
+    </div>
+    <div class="col-md-7">
+      <h4>Object editors <span class="label label-default">Separate scopes</span></h4><br/>
+    </div>
 
-      <ul ng-repeat="entry in list">
-        <li>
-          [{{entry.id}}]: {{entry.title}}
+  </div>
+
+  <div class="row" ng-controller="listController">
+
+    <div class="col-md-5">
+
+      <ul class="tree">
+        <li ng-repeat="entry in list">
+          <button type="button" class="btn btn-xs btn-success" ng-click="add(entry)" title="Add editor.">
+            <span class="glyphicon glyphicon-plus-sign"></span>
+          </button>
+          [{{entry.type}}/{{entry.id}}]: {{entry.title}}
           <ul ng-repeat="comment in entry.comments">
             <li>
-              [{{comment.id}}]: {{comment.title}}
+              <button type="button" class="btn btn-xs btn-success" ng-click="add(comment)" title="Add editor.">
+                <span class="glyphicon glyphicon-plus-sign"></span>
+              </button>
+              [{{comment.type}}/{{comment.id}}]: {{comment.title}}
             </li>
           </ul>
         </li>
       </ul>
+
+      <br/>
+      <button type="button" class="btn btn-sm btn-danger" ng-click="">
+        <span class="glyphicon glyphicon-refresh"></span>
+        Hard reload
+      </button>
+      <button type="button" class="btn btn-sm btn-success" ng-click="">
+        <span class="glyphicon glyphicon-refresh"></span>
+        Reftracker reload
+      </button>
+
+
     </div>
 
-    <div class="col-md-6">
-      <h4>Object editors <span class="label label-default">Separate scopes</span></h4>
+    <div class="col-md-7">
+
+      <div class="row">
+
+        <div class="col-md-6" ng-repeat="item in items track by $index">
+          <div class="panel panel-default" ng-controller="editController" ng-init="element=item">
+            <div class="panel-heading">{{element.type}}/{{element.id}}</div>
+            <div class="panel-body">
+
+              <div class="input-group input-group-sm">
+                <input type="text" class="form-control" ng-model="element.title"/>
+                <span class="input-group-btn">
+                  <button class="btn btn-danger" type="button" title="Hard reload from server.">
+                    <span class="glyphicon glyphicon-refresh"></span>
+                  </button>
+                  <button class="btn btn-success" type="button" title="Reload from server using reftracker.">
+                    <span class="glyphicon glyphicon-refresh"></span>
+                  </button>
+                </span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
 
   </div>

@@ -3,21 +3,25 @@
         "id": 1,
         "type": "BlogEntry",
         "title": "Hello from entry 1",
+        "link": "json/entries/e1.json",
         "comments": [
             {
                 "id": 1,
                 "type": "BlogComment",
-                "title": "Hello from comment 1"
+                "title": "Hello from comment 1",
+                "link": "json/comments/c1.json"
             },
             {
                 "id": 2,
                 "type": "BlogComment",
-                "title": "Hello from comment 2"
+                "title": "Hello from comment 2",
+                "link": "json/comments/c2.json"
             },
             {
                 "id": 3,
                 "type": "BlogComment",
-                "title": "Hello from comment 3"
+                "title": "Hello from comment 3",
+                "link": "json/comments/c3.json"
             }
         ]
     },
@@ -25,21 +29,25 @@
         "id": 2,
         "type": "BlogEntry",
         "title": "Hello from entry 2",
+        "link": "json/entries/e2.json",
         "comments": [
             {
                 "id": 4,
                 "type": "BlogComment",
-                "title": "Hello from comment 4"
+                "title": "Hello from comment 4",
+                "link": "json/comments/c4.json"
             },
             {
                 "id": 5,
                 "type": "BlogComment",
-                "title": "Hello from comment 5"
+                "title": "Hello from comment 5",
+                "link": "json/comments/c5.json"
             },
             {
                 "id": 6,
                 "type": "BlogComment",
-                "title": "Hello from comment 6"
+                "title": "Hello from comment 6",
+                "link": "json/comments/c6.json"
             }
         ]
     },
@@ -47,21 +55,25 @@
         "id": 3,
         "type": "BlogEntry",
         "title": "Hello from entry 3",
+        "link": "json/entries/e3.json",
         "comments": [
             {
                 "id": 7,
                 "type": "BlogComment",
-                "title": "Hello from comment 7"
+                "title": "Hello from comment 7",
+                "link": "json/comments/c7.json"
             },
             {
                 "id": 8,
                 "type": "BlogComment",
-                "title": "Hello from comment 8"
+                "title": "Hello from comment 8",
+                "link": "json/comments/c8.json"
             },
             {
                 "id": 9,
                 "type": "BlogComment",
-                "title": "Hello from comment 9"
+                "title": "Hello from comment 9",
+                "link": "json/comments/c9.json"
             }
         ]
     }
