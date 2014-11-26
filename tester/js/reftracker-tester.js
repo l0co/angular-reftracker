@@ -7,6 +7,17 @@
 var rtTester = angular.module('rtTester', ['refTracker', 'ngResource']);
 
 rtTester.controller('listController',
-['$resource',
-function($resource) {
+['$scope', '$resource',
+function($scope, $resource) {
+
+    $scope.items = [];
+
+    $resource('json/objects.json').query({}, function(data) {
+        $scope.list = data;
+    });
+
+    $scope.add = function(item) {
+
+    }
+
 }]);

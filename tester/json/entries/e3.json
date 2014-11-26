@@ -1,0 +1,22 @@
+{
+    "id": 3,
+    "type": "BlogEntry",
+    "title": "Hello from entry 3",
+    "comments": [
+        {
+            "id": 7,
+            "type": "BlogComment",
+            "title": "Hello from comment 7"
+        },
+        {
+            "id": 8,
+            "type": "BlogComment",
+            "title": "Hello from comment 8"
+        },
+        {
+            "id": 9,
+            "type": "BlogComment",
+            "title": "Hello from comment 9"
+        }
+    ]
+}

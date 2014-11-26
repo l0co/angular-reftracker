@@ -31,11 +31,22 @@
   <div class="row">
 
     <div class="col-md-6" ng-controller="listController">
-      <h3>Objects structure</h3>
+      <h4>Objects structure <span class="label label-default">Single scope</span></h4>
+
+      <ul ng-repeat="entry in list">
+        <li>
+          [{{entry.id}}]: {{entry.title}}
+          <ul ng-repeat="comment in entry.comments">
+            <li>
+              [{{comment.id}}]: {{comment.title}}
+            </li>
+          </ul>
+        </li>
+      </ul>
     </div>
 
     <div class="col-md-6">
-      <h3>Objects editor</h3>
+      <h4>Object editors <span class="label label-default">Separate scopes</span></h4>
     </div>
 
   </div>

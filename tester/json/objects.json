@@ -2,66 +2,66 @@
     {
         "id": 1,
         "type": "BlogEntry",
-        "title": "Hello world 1",
+        "title": "Hello from entry 1",
         "comments": [
             {
                 "id": 1,
                 "type": "BlogComment",
-                "title": "Hello country 1"
+                "title": "Hello from comment 1"
             },
             {
                 "id": 2,
                 "type": "BlogComment",
-                "title": "Hello country 2"
+                "title": "Hello from comment 2"
             },
             {
                 "id": 3,
                 "type": "BlogComment",
-                "title": "Hello country 3"
+                "title": "Hello from comment 3"
             }
         ]
     },
     {
         "id": 2,
         "type": "BlogEntry",
-        "title": "Hello world 2",
+        "title": "Hello from entry 2",
         "comments": [
             {
                 "id": 4,
                 "type": "BlogComment",
-                "title": "Hello country 4"
+                "title": "Hello from comment 4"
             },
             {
                 "id": 5,
                 "type": "BlogComment",
-                "title": "Hello country 5"
+                "title": "Hello from comment 5"
             },
             {
                 "id": 6,
                 "type": "BlogComment",
-                "title": "Hello country 6"
+                "title": "Hello from comment 6"
             }
         ]
     },
     {
         "id": 3,
         "type": "BlogEntry",
-        "title": "Hello world 3",
+        "title": "Hello from entry 3",
         "comments": [
             {
                 "id": 7,
                 "type": "BlogComment",
-                "title": "Hello country 7"
+                "title": "Hello from comment 7"
             },
             {
                 "id": 8,
                 "type": "BlogComment",
-                "title": "Hello country 8"
+                "title": "Hello from comment 8"
             },
             {
                 "id": 9,
                 "type": "BlogComment",
-                "title": "Hello country 9"
+                "title": "Hello from comment 9"
             }
         ]
     }
