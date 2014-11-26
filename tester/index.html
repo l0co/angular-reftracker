@@ -49,13 +49,25 @@
           <button type="button" class="btn btn-xs btn-success" ng-click="add(entry)" title="Add editor.">
             <span class="glyphicon glyphicon-plus-sign"></span>
           </button>
-          [{{entry.type}}/{{entry.id}}]: {{entry.title}}
+          <button type="button" class="btn btn-default btn-xs" ng-model="entry.highlight"
+                  btn-checkbox title="Identify this reference.">
+            <span class="glyphicon glyphicon-eye-open"></span>
+          </button>
+          <span ng-class="{'bg-primary': entry.highlight}">
+            [{{entry.type}}/{{entry.id}}]: {{entry.title}}
+          </span>
           <ul ng-repeat="comment in entry.comments">
             <li>
               <button type="button" class="btn btn-xs btn-success" ng-click="add(comment)" title="Add editor.">
                 <span class="glyphicon glyphicon-plus-sign"></span>
               </button>
-              [{{comment.type}}/{{comment.id}}]: {{comment.title}}
+              <button type="button" class="btn btn-default btn-xs" ng-model="comment.highlight"
+                      btn-checkbox title="Identify this reference.">
+                <span class="glyphicon glyphicon-eye-open"></span>
+              </button>
+              <span ng-class="{'bg-primary': comment.highlight}">
+                [{{comment.type}}/{{comment.id}}]: {{comment.title}}
+              </span>
             </li>
           </ul>
         </li>
@@ -85,8 +97,19 @@
       <div class="row">
 
         <div class="col-md-6" ng-repeat="item in items track by $index">
-          <div class="panel panel-default" ng-controller="editController" ng-init="element=item">
-            <div class="panel-heading">{{element.type}}/{{element.id}}</div>
+
+          <div class="panel" ng-controller="editController"
+               ng-class="{'panel-default': !element.highlight, 'panel-primary': element.highlight}">
+
+            <div class="panel-heading">
+              <button type="button" class="btn btn-default btn-xs pull-right" ng-model="element.highlight"
+                      btn-checkbox title="Identify this reference.">
+                <span class="glyphicon glyphicon-eye-open"></span>
+              </button>
+
+              {{element.type}}/{{element.id}}
+            </div>
+
             <div class="panel-body">
 
               <div class="input-group input-group-sm">
@@ -102,7 +125,9 @@
               </div>
 
             </div>
+
           </div>
+
         </div>
 
       </div>
