@@ -4,7 +4,18 @@
  * @author lukasz.frankowski@gmail.com
  */
 
+'use strict';
+
 var rtTester = angular.module('rtTester', ['refTracker', 'ngResource', 'ui.bootstrap']);
+
+// register our objects id resolver
+rtTester.config(['refCacheProvider', function(refCacheProvider) {
+    refCacheProvider.setIDResolver(function(object) {
+        if (object.type && object.id)
+            return object.type + "/" + object.id;
+        return null;
+    });
+}]);
 
 rtTester.controller('listController',
 ['$scope', '$resource',

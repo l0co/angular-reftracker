@@ -27,5 +27,33 @@
  * @license MIT
  */
 
+'use strict';
+
 var refTracker = angular.module('refTracker', []);
 
+refTracker.provider('refCache', function() {
+
+    // default id resolver working with UUID id-s in "id" object field
+    var idResolver = function(object) {
+        if (object.id)
+            return object.id;
+        return null;
+    };
+
+    /**
+     * Update id resolver
+     * @param {function} func function(object) returning unique string id of the object, or null if the object
+     *                        has no id (so it won't be considered for reference management).
+     */
+    this.setIDResolver = function(func) {
+        idResolver = func;
+    };
+
+    this.$get = [
+        function() {
+            // TODOLF impl
+            return {};
+        }
+    ];
+
+});
