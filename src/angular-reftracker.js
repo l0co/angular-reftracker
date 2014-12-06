@@ -63,8 +63,16 @@ refTracker.provider('refCache', function() {
                     this.reference = null;
                 }
 
+                function isObjectOrArray(object) {
+                    return object && typeof object === "object";
+                }
+
+                function isArray(object) {
+                    return Array.isArray(object);
+                }
+
                 function isObject(object) {
-                    return object && typeof object === "object" && !Array.isArray(object);
+                    return isObjectOrArray(object) && !isArray(object);
                 }
 
                 /**
@@ -79,8 +87,12 @@ refTracker.provider('refCache', function() {
                 this.addReference = function(object, method) {
                     method = method || 'merge';
 
+                    if (!isObjectOrArray(object))
+                        return null;
+
                     // TODOLF impl
                     console.log('add reference', object);
+                    return object;
                 };
 
                 /**
@@ -88,8 +100,12 @@ refTracker.provider('refCache', function() {
                  * @param {object} object Object to remove (will be removed recursively)
                  */
                 this.removeReference = function(object) {
+                    if (!isObjectOrArray(object))
+                        return null;
+
                     // TODOLF impl
                     console.log('remove reference', object);
+                    return object;
                 }
 
             };
@@ -101,37 +117,47 @@ refTracker.provider('refCache', function() {
 /**
  * Managed references scope
  */
-refTracker.factory('refScope', ['refCache',
+refTracker.factory('ManagedScope', ['refCache',
     function(refCache) {
 
         /**
          * Managed references scope constructor
          * @param {object} $scope scope to join
          */
-        return function RefScope($scope) {
-            this.referenced = [];
-
-            var $this = this;
-
-            // remove all references when scope dies
-            $scope.$on('$destroy', function() {
-                angular.forEach($this.referenced, function(object) {
-                    refCache.removeReference(object);
-                });
-            });
+        return function ManagedScope($scope) {
+            var referenced = [];
 
             /**
-             * Function for adding objects to $scope
-             * @param {string} prop After execution the object appears in $scope.prop
-             * @param {object} object Object to add to $scope
+             * Creates new object reference and adds it to the $scope as $scope.propName
+             * @param propName {string} Scope property name
+             * @param object {object|object[]} Object to add
              */
-            this.add = function(prop, object) {
-                // TODOLF what if the existing scope object is replaced? remove prop from refCache and referenced first (!)
-                var reference = refCache.addReference(object);
-                $this.referenced.push(reference);
-                $scope[prop] = reference;
-            }
+            this.set = function(propName, object) {
+                // remove already existing references of previous value
+                if ($scope[propName]) {
+                    // find out if the object is already referenced
+                    var idx = referenced.indexOf($scope[propName]);
+                    if (idx>-1) {
+                        refCache.removeReference($scope[propName]); // remove from referenced objects
+                        referenced.splice(idx, 1);
+                    }
+                }
 
+                var newObject = refCache.addReference(object);
+
+                if (!newObject)
+                    newObject = object;
+                else
+                    referenced.push(newObject); // add to referenced objects
+
+                $scope[propName] = newObject;
+            };
+
+//            $scope.$on('$destroy', function() {
+//                angular.forEach($this.referenced, function(object) {
+//                    refCache.removeReference(object);
+//                });
+//            });
         }
 
     }
