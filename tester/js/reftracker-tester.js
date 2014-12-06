@@ -21,13 +21,6 @@ rtTester.controller('listController',
 ['$scope', '$resource', 'ManagedScope', '$timeout',
 function($scope, $resource, ManagedScope, $timeout) {
 
-    var myObject = {
-        id: 1,
-        type: 'Test',
-        myProp1: 'myVal1',
-        myProp2: 'myVal2'
-    };
-
     $scope.$managed = new ManagedScope($scope);
 
     $scope.hardReload = function() {
@@ -51,22 +44,35 @@ function($scope, $resource, ManagedScope, $timeout) {
         $scope.items.push(item);
     };
 
+    $scope.removeOne = function() {
+        $scope.items.splice($scope.items.length-1, 1);
+    };
+
     $scope.reset();
 
 }]);
 
 rtTester.controller('editController',
-['$scope', '$resource',
-function($scope, $resource) {
+['$scope', '$resource', 'ManagedScope',
+function($scope, $resource, ManagedScope) {
+
+    $scope.$managed = new ManagedScope($scope);
 
     // item goes from parent scope here, we use it to create separate reference in this controller
-    $scope.element = $scope.item;
-    $scope.highlight = false;
+    $scope.$managed.set('element', $scope.item);
+    var url = $scope.element.link;
 
     $scope.hardReload = function() {
-        $resource($scope.element.link).get({}, function(data) {
+        $resource(url).get({}, function(data) {
             $scope.element.highlight = false;
             $scope.element = data;
+        });
+    };
+
+    $scope.reload = function() {
+        $resource(url).get({}, function(data) {
+            $scope.element.highlight = false;
+            $scope.$managed.set('element', data);
         });
     };
 

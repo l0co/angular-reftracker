@@ -153,11 +153,12 @@ refTracker.factory('ManagedScope', ['refCache',
                 $scope[propName] = newObject;
             };
 
-//            $scope.$on('$destroy', function() {
-//                angular.forEach($this.referenced, function(object) {
-//                    refCache.removeReference(object);
-//                });
-//            });
+            $scope.$on('$destroy', function() {
+                angular.forEach(referenced, function(object) {
+                    refCache.removeReference(object);
+                });
+                referenced = [];
+            });
         }
 
     }
