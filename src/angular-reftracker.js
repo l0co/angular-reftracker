@@ -52,8 +52,8 @@ refTracker.provider('refCache', function() {
         idResolver = func;
     };
 
-    this.$get = [
-        function() {
+    this.$get = ['$log',
+        function($log) {
             return new function RefCache() {
                 var cache = {};
 
@@ -103,9 +103,6 @@ refTracker.provider('refCache', function() {
                     if (!id)
                         return object;
 
-                    // TODOLF remove
-                    console.log('meet', id, object);
-
                     if (!visited[id]) {
                         visited[id] = true;
                         var cacheEntry = cache[id];
@@ -128,8 +125,7 @@ refTracker.provider('refCache', function() {
                             for (var prop in ref)
                                 ref[prop] = scanR(ref[prop], operation, visited);
 
-                            // TODOLF remove
-                            console.log('new refcount', id, ref, cacheEntry.refCount);
+                            $log.debug('new object', id, ref, 'with refcount', cacheEntry.refCount);
 
                             return ref;
 
@@ -139,8 +135,8 @@ refTracker.provider('refCache', function() {
                             if (cacheEntry) {
                                 cacheEntry.refCount--;
 
-                                // TODOLF remove
-                                console.log('remove refcount', id, cacheEntry.reference, cacheEntry.refCount);
+                                $log.debug('remove object', id, cacheEntry.reference, 'with refcount',
+                                    cacheEntry.refCount);
 
                                 if (cacheEntry.refCount<=0) {
                                     delete cache[id];
@@ -164,9 +160,6 @@ refTracker.provider('refCache', function() {
                 this.addReference = function(object) {
                     if (!isObjectOrArray(object))
                         return object;
-
-                    // TODOLF impl
-                    console.log('add reference', object);
                     return scanR(object, 'add');
                 };
 
@@ -177,9 +170,6 @@ refTracker.provider('refCache', function() {
                 this.removeReference = function(object) {
                     if (!isObjectOrArray(object))
                         return;
-
-                    // TODOLF impl
-                    console.log('remove reference', object);
                     scanR(object, 'remove');
                 };
 
