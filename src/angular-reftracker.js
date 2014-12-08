@@ -76,23 +76,98 @@ refTracker.provider('refCache', function() {
                 }
 
                 /**
+                 * Scans object/array recursively to look for references
+                 * @param object Base object
+                 * @param operation 'add' or 'remove'
+                 * @param visited Visited elements
+                 * @return {*}
+                 */
+                function scanR(object, operation, visited) {
+                    visited = visited || {};
+
+                    // array part
+                    if (isArray(object)) {
+                        var array = [];
+                        angular.forEach(object, function(o) {
+                            array.push(scanR(o, operation, visited));
+                        });
+                        return array;
+                    }
+
+                    // unknown part
+                    if (!isObject(object))
+                        return object;
+
+                    // object part
+                    var id = idResolver(object);
+                    if (!id)
+                        return object;
+
+                    // TODOLF remove
+                    console.log('meet', id, object);
+
+                    if (!visited[id]) {
+                        visited[id] = true;
+                        var cacheEntry = cache[id];
+
+                        if (operation == 'add') {
+
+                            // add new reference
+
+                            if (!cacheEntry) {
+                                // object not in cache
+                                cacheEntry = new CacheEntry(id);
+                                cacheEntry.reference = object;
+                                cache[id] = cacheEntry;
+                            }
+
+                            cacheEntry.refCount++;
+
+                            var ref = cacheEntry.reference;
+                            angular.extend(ref, object);
+                            for (var prop in ref)
+                                ref[prop] = scanR(ref[prop], operation, visited);
+
+                            // TODOLF remove
+                            console.log('new refcount', id, ref, cacheEntry.refCount);
+
+                            return ref;
+
+                        } else {
+
+                            // remove reference
+                            if (cacheEntry) {
+                                cacheEntry.refCount--;
+
+                                // TODOLF remove
+                                console.log('remove refcount', id, cacheEntry.reference, cacheEntry.refCount);
+
+                                if (cacheEntry.refCount<=0) {
+                                    delete cache[id];
+                                }
+
+                                for (var prop in cacheEntry.reference)
+                                    scanR(cacheEntry.reference[prop], operation, visited);
+                            }
+
+                        }
+                    }
+
+                    return object;
+                }
+
+                /**
                  * Adds new object reference to cache
                  * @param {object} object Object to add (will be added recursively)
-                 * @param {string} method If the reference is already created, defines the method of reference update
-                 *                        operation, that may be 'merge' (will merge new objects into old, default) or
-                 *                        'replace' (will clean the previous references and use only new object
-                 *                        properties).
                  * @returns {object} referenced object
                  */
-                this.addReference = function(object, method) {
-                    method = method || 'merge';
-
+                this.addReference = function(object) {
                     if (!isObjectOrArray(object))
-                        return null;
+                        return object;
 
                     // TODOLF impl
                     console.log('add reference', object);
-                    return object;
+                    return scanR(object, 'add');
                 };
 
                 /**
@@ -101,12 +176,12 @@ refTracker.provider('refCache', function() {
                  */
                 this.removeReference = function(object) {
                     if (!isObjectOrArray(object))
-                        return null;
+                        return object;
 
                     // TODOLF impl
                     console.log('remove reference', object);
-                    return object;
-                }
+                    scanR(object, 'remove');
+                };
 
             };
         }
@@ -143,14 +218,10 @@ refTracker.factory('ManagedScope', ['refCache',
                     }
                 }
 
-                var newObject = refCache.addReference(object);
+                object = refCache.addReference(object);
+                referenced.push(object); // add to referenced objects
 
-                if (!newObject)
-                    newObject = object;
-                else
-                    referenced.push(newObject); // add to referenced objects
-
-                $scope[propName] = newObject;
+                $scope[propName] = object;
             };
 
             $scope.$on('$destroy', function() {
