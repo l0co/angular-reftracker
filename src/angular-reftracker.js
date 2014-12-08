@@ -176,7 +176,7 @@ refTracker.provider('refCache', function() {
                  */
                 this.removeReference = function(object) {
                     if (!isObjectOrArray(object))
-                        return object;
+                        return;
 
                     // TODOLF impl
                     console.log('remove reference', object);
@@ -202,6 +202,15 @@ refTracker.factory('ManagedScope', ['refCache',
         return function ManagedScope($scope) {
             var referenced = [];
 
+            function removeFromReferenced(object) {
+                // find out if the object is already referenced
+                var idx = referenced.indexOf(object);
+                if (idx>-1) {
+                    refCache.removeReference(object); // remove from referenced objects
+                    referenced.splice(idx, 1);
+                }
+            }
+
             /**
              * Creates new object reference and adds it to the $scope as $scope.propName
              * @param propName {string} Scope property name
@@ -209,19 +218,34 @@ refTracker.factory('ManagedScope', ['refCache',
              */
             this.set = function(propName, object) {
                 // remove already existing references of previous value
-                if ($scope[propName]) {
-                    // find out if the object is already referenced
-                    var idx = referenced.indexOf($scope[propName]);
-                    if (idx>-1) {
-                        refCache.removeReference($scope[propName]); // remove from referenced objects
-                        referenced.splice(idx, 1);
-                    }
-                }
+                if ($scope[propName])
+                    removeFromReferenced($scope[propName]);
+
 
                 object = refCache.addReference(object);
                 referenced.push(object); // add to referenced objects
 
                 $scope[propName] = object;
+            };
+
+            /**
+             * This function needs to be called if you join new object no to the scope directly (using set()),
+             * but to the object already set in managed scope and tracked by reftracker. If such new reference
+             * is created in existing object, this function adds new reference to the object withing the scope.
+             * @param object {object|object[]} Newly created object joined to already managed reference
+             */
+            this.add = function(object) {
+                return refCache.addReference(object);
+            };
+
+            /**
+             * This function needs to be called if you remove new object from the managed scope either it's
+             * direct scope object, or is removed from already managed object structure.
+             * @param object {object|object[]} Object removed from scope or already managed reference
+             */
+            this.remove = function(object) {
+                removeFromReferenced(object);
+                return refCache.removeReference(object);
             };
 
             $scope.$on('$destroy', function() {
