@@ -50,6 +50,25 @@ function($scope, $resource, ManagedScope, $timeout) {
 
     $scope.reset();
 
+    // async simulation support
+
+    $scope.asyncId = 'BlogEntry/1';
+
+    $scope.simulateAsync = function() {
+        var identity = $scope.asyncId.split('/');
+        if (identity.length>1)
+            $scope.$managed.async(
+                {
+                    id: identity[1],
+                    type: identity[0]
+                },
+                'Hello from async event',
+                function(object, event) {
+                    object.title = event;
+                }
+            );
+    }
+
 }]);
 
 rtTester.controller('editController',

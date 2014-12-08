@@ -132,6 +132,7 @@ refTracker.provider('refCache', function() {
                         } else {
 
                             // remove reference
+
                             if (cacheEntry) {
                                 cacheEntry.refCount--;
 
@@ -172,6 +173,25 @@ refTracker.provider('refCache', function() {
                         return;
                     scanR(object, 'remove');
                 };
+
+                /**
+                 * Returns the managed object reference
+                 * @param object {object} Managed object reference or null if object is not managed
+                 */
+                this.findReference = function(object) {
+                    if (!isObject(object))
+                        return null;
+
+                    var id = idResolver(object);
+                    if (!id)
+                        return null;
+
+                    var cacheEntry = cache[id];
+                    if (cacheEntry)
+                        return cacheEntry.reference;
+
+                    return null;
+                }
 
             };
         }
@@ -238,6 +258,27 @@ refTracker.factory('ManagedScope', ['refCache',
                 return refCache.removeReference(object);
             };
 
+            /**
+             * Executed on asynchronous object event
+             * @param object {object} Object changed asynchronously
+             * @param event {object} The event object (can be the same as object)
+             * @param callback {function} function(object, event) triggered on manages reference of object. Null
+             *                            assumes default behavior which is copy the event properties to the managed
+             *                            object reference.
+             */
+            this.async = function(object, event, callback) {
+                callback = callback || function(object, event) {
+                    angular.extend(object, event);
+                };
+
+                var ref = refCache.findReference(object);
+                if (ref)
+                    callback(ref, event);
+            };
+
+            /**
+             * refCache cleanup function on scope destroy
+             */
             $scope.$on('$destroy', function() {
                 angular.forEach(referenced, function(object) {
                     refCache.removeReference(object);

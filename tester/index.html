@@ -110,12 +110,26 @@
 
       <div class="row row-actions">
 
-        <div class="col-md-12">
+        <div class="col-md-2">
 
-          <button type="button" class="btn btn-sm btn-default" ng-click="removeOne()">
+          <button type="button" class="btn btn-sm btn-warning" ng-click="removeOne()">
             <span class="glyphicon glyphicon-remove"></span>
             Remove last
           </button>
+
+        </div>
+
+        <div class="col-md-6">
+
+          <div class="input-group">
+            <input type="text" class="form-control" ng-model="asyncId">
+            <span class="input-group-btn">
+              <button class="btn btn-primary" type="button" ng-click="simulateAsync()">
+                <span class="glyphicon glyphicon-download"></span>
+                Simulate async
+              </button>
+            </span>
+          </div>
 
         </div>
 
