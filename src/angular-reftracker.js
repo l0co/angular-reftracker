@@ -1,7 +1,7 @@
 /**
  * Angular Reftracker
  *
- * Copyright (c) 2014 Lukasz Frankowski
+ * Copyright (c) 2014 l0co
  *
  * The MIT License (MIT)
  *
@@ -23,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
- * @author lukasz.frankowski@gmail.com
+ * @author l0co@wp.pl
  * @license MIT
  */
 

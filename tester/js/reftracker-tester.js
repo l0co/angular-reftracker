@@ -1,7 +1,7 @@
 /**
  * Angular Reftracker Tester module
  *
- * @author lukasz.frankowski@gmail.com
+ * @author l0co@wp.pl
  */
 
 'use strict';
