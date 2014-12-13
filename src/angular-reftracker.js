@@ -75,6 +75,10 @@ refTracker.provider('refCache', function() {
                     return isObjectOrArray(object) && !isArray(object);
                 }
 
+                function isString(object) {
+                    return typeof object == "string";
+                }
+
                 /**
                  * Scans object/array recursively to look for references
                  * @param object Base object
@@ -176,22 +180,47 @@ refTracker.provider('refCache', function() {
 
                 /**
                  * Returns the managed object reference
-                 * @param object {object} Managed object reference or null if object is not managed
+                 * @param identity {object|string} Object reference or its id.
+                 * @return {object} Managed object reference or null if such reference is not found.
                  */
-                this.findReference = function(object) {
-                    if (!isObject(object))
-                        return null;
+                this.findReference = function(identity) {
+                    var id = null;
+                    if (isString(identity))
+                        id = identity;
 
-                    var id = idResolver(object);
-                    if (!id)
-                        return null;
+                    if (!id) {
+                        if (!isObject(identity))
+                            return null;
+
+                        id = idResolver(identity);
+                        if (!id)
+                            return null;
+                    }
 
                     var cacheEntry = cache[id];
                     if (cacheEntry)
                         return cacheEntry.reference;
 
                     return null;
-                }
+                };
+
+                /**
+                 * Executed on asynchronous object event
+                 * @param identity {object|string} Object changed asynchronously or its id
+                 * @param event {object} The event object
+                 * @param callback {function} function(object, event) triggered on manages reference of object. Null
+                 *                            assumes default behavior which is copy the event properties to the managed
+                 *                            object reference.
+                 */
+                this.async = function(identity, event, callback) {
+                    callback = callback || function(object, event) {
+                        angular.extend(object, event);
+                    };
+
+                    var ref = this.findReference(identity);
+                    if (ref)
+                        callback(ref, event);
+                };
 
             };
         }
@@ -239,7 +268,7 @@ refTracker.factory('ManagedScope', ['refCache',
             };
 
             /**
-             * This function needs to be called if you join new object no to the scope directly (using set()),
+             * This function needs to be called if you join new object not to the scope directly (for that is set()),
              * but to the object already set in managed scope and tracked by reftracker. If such new reference
              * is created in existing object, this function adds new reference to the object withing the scope.
              * @param object {object|object[]} Newly created object joined to already managed reference
@@ -256,24 +285,6 @@ refTracker.factory('ManagedScope', ['refCache',
             this.remove = function(object) {
                 removeFromReferenced(object);
                 return refCache.removeReference(object);
-            };
-
-            /**
-             * Executed on asynchronous object event
-             * @param object {object} Object changed asynchronously
-             * @param event {object} The event object (can be the same as object)
-             * @param callback {function} function(object, event) triggered on manages reference of object. Null
-             *                            assumes default behavior which is copy the event properties to the managed
-             *                            object reference.
-             */
-            this.async = function(object, event, callback) {
-                callback = callback || function(object, event) {
-                    angular.extend(object, event);
-                };
-
-                var ref = refCache.findReference(object);
-                if (ref)
-                    callback(ref, event);
             };
 
             /**

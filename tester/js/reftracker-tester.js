@@ -18,8 +18,8 @@ rtTester.config(['refCacheProvider', function(refCacheProvider) {
 }]);
 
 rtTester.controller('listController',
-['$scope', '$resource', 'ManagedScope', '$timeout',
-function($scope, $resource, ManagedScope, $timeout) {
+['$scope', '$resource', 'ManagedScope', 'refCache',
+function($scope, $resource, ManagedScope, refCache) {
 
     $scope.$managed = new ManagedScope($scope);
 
@@ -55,18 +55,11 @@ function($scope, $resource, ManagedScope, $timeout) {
     $scope.asyncId = 'BlogEntry/1';
 
     $scope.simulateAsync = function() {
-        var identity = $scope.asyncId.split('/');
-        if (identity.length>1)
-            $scope.$managed.async(
-                {
-                    id: identity[1],
-                    type: identity[0]
-                },
-                'Hello from async event',
-                function(object, event) {
-                    object.title = event;
-                }
-            );
+        refCache.async($scope.asyncId, 'Hello from async event',
+            function(object, event) {
+                object.title = event;
+            }
+        );
     }
 
 }]);
