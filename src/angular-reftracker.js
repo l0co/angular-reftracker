@@ -228,7 +228,7 @@ refTracker.provider('refCache', function() {
                  * Updates the object reference with new instance
                  * @param object {object} Object to update
                  */
-                this.update = function(object) {
+                this.updateReference = function(object) {
                     this.async(object);
                 }
 
