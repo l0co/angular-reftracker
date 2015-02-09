@@ -207,7 +207,7 @@ refTracker.provider('refCache', function() {
                 /**
                  * Executed on asynchronous object event
                  * @param identity {object|string} Object changed asynchronously or its id
-                 * @param event {object} The event object
+                 * @param event {object} The event object (if null, identity will be used as the event object)
                  * @param callback {function} function(object, event) triggered on manages reference of object. Null
                  *                            assumes default behavior which is copy the event properties to the managed
                  *                            object reference.
@@ -217,10 +217,20 @@ refTracker.provider('refCache', function() {
                         angular.extend(object, event);
                     };
 
+                    event = event || identity;
+
                     var ref = this.findReference(identity);
                     if (ref)
                         callback(ref, event);
                 };
+
+                /**
+                 * Updates the object reference with new instance
+                 * @param object {object} Object to update
+                 */
+                this.update = function(object) {
+                    this.async(object);
+                }
 
             };
         }
