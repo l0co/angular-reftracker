@@ -51,8 +51,7 @@ function($scope, $resource, ManagedScope, refCache) {
     $scope.reset();
 
     // async simulation support
-
-    $scope.asyncId = 'BlogEntry/1';
+    $scope.asyncCounter = 0;
 
     $scope.simulateAsync = function(operation) {
         $resource('json/entries/e1.json').get({}, function(data) {
@@ -62,10 +61,10 @@ function($scope, $resource, ManagedScope, refCache) {
                     "type": "BlogComment",
                     "title": "Hello from comment 9"
                 });
-            else
+            else if (operation=='remove')
                 data.comments.splice(2, 1);
 
-            var text = "Hello from async change";
+            var text = "Async change " + (++$scope.asyncCounter);
             data.title = text;
             angular.forEach(data.comments, function(e) {
                 e.title = text;

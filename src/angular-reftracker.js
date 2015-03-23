@@ -82,7 +82,7 @@ refTracker.provider('refCache', function() {
                 /**
                  * Scans object/array recursively to look for references
                  * @param object Base object
-                 * @param operation 'add' or 'remove'
+                 * @param operation 'add', 'remove', 'remove-soft'
                  * @param visited Visited elements
                  * @return {*}
                  */
@@ -133,17 +133,18 @@ refTracker.provider('refCache', function() {
 
                             return ref;
 
-                        } else {
+                        } else if (operation == 'remove' || operation == 'remove-soft') {
 
                             // remove reference
 
                             if (cacheEntry) {
                                 cacheEntry.refCount--;
 
-                                $log.debug('remove object', id, cacheEntry.reference, 'with refcount',
-                                    cacheEntry.refCount);
+                                $log.debug(operation=='remove' ? 'remove object' : 'remove softly',
+                                    id, cacheEntry.reference, 'with refcount', cacheEntry.refCount);
 
-                                if (cacheEntry.refCount<=0) {
+                                // do not remove overall entry yet on remove-soft operation (pre-update operation)
+                                if (cacheEntry.refCount<=0 && operation!='remove-soft') {
                                     delete cache[id];
                                 }
 
@@ -220,8 +221,25 @@ refTracker.provider('refCache', function() {
                     event = event || identity;
 
                     var ref = this.findReference(identity);
-                    if (ref)
+                    if (ref) {
+                        // we now have the entry to update in refCache, firstly we will softly remove its references
+                        scanR(ref, 'remove-soft');
+
+                        // now we may extend the referenced object with new data
                         callback(ref, event);
+
+                        // and re-join object to the refCache
+                        this.addReference(ref);
+
+                        // now we can cleanup unused references from refCache (if they are still present)
+                        angular.forEach(cache, function(cacheEntry, id) {
+                            if (cacheEntry.refCount==0) {
+                                $log.debug('cleanup unused reference',
+                                    id, cacheEntry.reference, 'with refcount', cacheEntry.refCount);
+                                delete cache[id];
+                            }
+                        });
+                    }
                 };
 
                 /**

@@ -113,8 +113,11 @@
         <div class="col-md-6">
 
           <div class="input-group input-group-sm">
-            <input type="text" class="form-control" ng-model="asyncId" readonly>
             <span class="input-group-btn">
+              <button class="btn btn-success" type="button" ng-click="simulateAsync('reload')">
+                <span class="glyphicon glyphicon-download"></span>
+                Async/reload
+              </button>
               <button class="btn btn-success" type="button" ng-click="simulateAsync('add')">
                 <span class="glyphicon glyphicon-download"></span>
                 Async/add
