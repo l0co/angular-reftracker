@@ -54,12 +54,25 @@ function($scope, $resource, ManagedScope, refCache) {
 
     $scope.asyncId = 'BlogEntry/1';
 
-    $scope.simulateAsync = function() {
-        refCache.async($scope.asyncId, 'Hello from async event',
-            function(object, event) {
-                object.title = event;
-            }
-        );
+    $scope.simulateAsync = function(operation) {
+        $resource('json/entries/e1.json').get({}, function(data) {
+            if (operation=='add')
+                data.comments.push({
+                    "id": 10,
+                    "type": "BlogComment",
+                    "title": "Hello from comment 9"
+                });
+            else
+                data.comments.splice(2, 1);
+
+            var text = "Hello from async change";
+            data.title = text;
+            angular.forEach(data.comments, function(e) {
+                e.title = text;
+            });
+
+            refCache.async(data);
+        });
     }
 
 }]);

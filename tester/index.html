@@ -113,11 +113,15 @@
         <div class="col-md-6">
 
           <div class="input-group input-group-sm">
-            <input type="text" class="form-control" ng-model="asyncId">
+            <input type="text" class="form-control" ng-model="asyncId" readonly>
             <span class="input-group-btn">
-              <button class="btn btn-success" type="button" ng-click="simulateAsync()">
+              <button class="btn btn-success" type="button" ng-click="simulateAsync('add')">
                 <span class="glyphicon glyphicon-download"></span>
-                Simulate async
+                Async/add
+              </button>
+              <button class="btn btn-success" type="button" ng-click="simulateAsync('remove')">
+                <span class="glyphicon glyphicon-download"></span>
+                Async/remove
               </button>
             </span>
           </div>
