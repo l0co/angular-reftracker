@@ -43,6 +43,9 @@ refTracker.provider('refCache', function() {
         return null;
     };
 
+    // default object extend function
+    var extendFunc = angular.extend;
+
     /**
      * Update id resolver
      * @param {function} func function(object) returning unique string id of the object, or null if the object
@@ -50,6 +53,14 @@ refTracker.provider('refCache', function() {
      */
     this.setIDResolver = function(func) {
         idResolver = func;
+    };
+
+    /**
+     * Update extend function, ie. function extending object from cache by external reference on async event.
+     * @param {function} func function with signature the same as angular.extend
+     */
+    this.setExtendFunc = function(func) {
+        extendFunc = func;
     };
 
     this.$get = ['$log',
@@ -125,7 +136,7 @@ refTracker.provider('refCache', function() {
                             cacheEntry.refCount++;
 
                             var ref = cacheEntry.reference;
-                            angular.extend(ref, object);
+                            extendFunc(ref, object);
                             for (var prop in ref)
                                 ref[prop] = scanR(ref[prop], operation, visited);
 
@@ -209,13 +220,13 @@ refTracker.provider('refCache', function() {
                  * Executed on asynchronous object event
                  * @param identity {object|string} Object changed asynchronously or its id
                  * @param event {object} The event object (if null, identity will be used as the event object)
-                 * @param callback {function} function(object, event) triggered on manages reference of object. Null
+                 * @param callback {function} function(object, event) triggered on managed reference of object. Null
                  *                            assumes default behavior which is copy the event properties to the managed
-                 *                            object reference.
+                 *                            object reference using extendFunc.
                  */
                 this.async = function(identity, event, callback) {
                     callback = callback || function(object, event) {
-                        angular.extend(object, event);
+                        extendFunc(object, event);
                     };
 
                     event = event || identity;
