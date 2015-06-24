@@ -67,6 +67,7 @@ refTracker.provider('refCache', function() {
         function($log) {
             return new function RefCache() {
                 var cache = {};
+                this.cache = cache;
 
                 function CacheEntry(id) {
                     this.id = id;
@@ -90,21 +91,31 @@ refTracker.provider('refCache', function() {
                     return typeof object == "string";
                 }
 
+                this.resolveId = function(object) {
+                    return idResolver(object);
+                };
+
+                this.extend = function(dst, src) {
+                    extendFunc(dst, src);
+                };
+
                 /**
                  * Scans object/array recursively to look for references
                  * @param object Base object
                  * @param operation 'add', 'remove', 'remove-soft'
-                 * @param visited Visited elements
+                 * @param visited {object[]} Visited objects
+                 * @param visitedIds {object} Visited ids
                  * @return {*}
                  */
-                function scanR(object, operation, visited) {
-                    visited = visited || {};
+                function scanR(object, operation, visited, visitedIds) {
+                    visited = visited || [];
+                    visitedIds = visitedIds || {};
 
                     // array part
                     if (isArray(object)) {
                         var array = [];
                         angular.forEach(object, function(o) {
-                            array.push(scanR(o, operation, visited));
+                            array.push(scanR(o, operation, visited, visitedIds));
                         });
                         return array;
                     }
@@ -115,32 +126,53 @@ refTracker.provider('refCache', function() {
 
                     // object part
                     var id = idResolver(object);
-                    if (!id)
-                        return object;
+                    // if no id is resolved so far, we need proceed with recursive scan, but we won't track this
+                    // object as a reference
 
-                    if (!visited[id]) {
-                        visited[id] = true;
-                        var cacheEntry = cache[id];
+                    // This is a little tricky, when json comes from the server and we have 'add' operation, we allow
+                    // to add more same identity objects if they are present in json (eg. entity may go twice), but we
+                    // shouldn't increase the refcounter for the reference added second time. This is because all these
+                    // references will be then merged into a single one, and on 'remove' operation removed once.
+                    var increaseCounter = true;
+                    if (id) {
+                        if (visitedIds[id] && operation == 'add')
+                            increaseCounter = false;
+                        visitedIds[id] = true;
+                    }
+
+                    if (visited.indexOf(object)==-1) {
+                        visited.push(object);
+                        var cacheEntry = id ? cache[id] : null;
 
                         if (operation == 'add') {
 
                             // add new reference
 
-                            if (!cacheEntry) {
+                            if (!cacheEntry && id) {
                                 // object not in cache
                                 cacheEntry = new CacheEntry(id);
                                 cacheEntry.reference = object;
                                 cache[id] = cacheEntry;
                             }
 
-                            cacheEntry.refCount++;
+                            var ref = object;
+                            if (cacheEntry) {
+                                if (increaseCounter)
+                                    cacheEntry.refCount++;
+                                ref = cacheEntry.reference;
+                                extendFunc(ref, object);
+                            }
 
-                            var ref = cacheEntry.reference;
-                            extendFunc(ref, object);
                             for (var prop in ref)
-                                ref[prop] = scanR(ref[prop], operation, visited);
+                                if (prop.substr(0,1)!='$') // skip special properties
+                                    ref[prop] = scanR(ref[prop], operation, visited, visitedIds);
 
-                            $log.debug('new object', id, ref, 'with refcount', cacheEntry.refCount);
+                            if (cacheEntry) {
+                                if (increaseCounter)
+                                    $log.debug('provider:refTracker', 'new object', id, ref, 'with refcount', cacheEntry.refCount);
+                                else
+                                    $log.debug('provider:refTracker', 'update object', id, ref, 'with refcount', cacheEntry.refCount);
+                            }
 
                             return ref;
 
@@ -151,7 +183,7 @@ refTracker.provider('refCache', function() {
                             if (cacheEntry) {
                                 cacheEntry.refCount--;
 
-                                $log.debug(operation=='remove' ? 'remove object' : 'remove softly',
+                                $log.debug('provider:refTracker', operation=='remove' ? 'remove object' : 'remove softly',
                                     id, cacheEntry.reference, 'with refcount', cacheEntry.refCount);
 
                                 // do not remove overall entry yet on remove-soft operation (pre-update operation)
@@ -160,7 +192,8 @@ refTracker.provider('refCache', function() {
                                 }
 
                                 for (var prop in cacheEntry.reference)
-                                    scanR(cacheEntry.reference[prop], operation, visited);
+                                    if (prop.substr(0,1)!='$') // skip special properties
+                                        scanR(cacheEntry.reference[prop], operation, visited, visitedIds);
                             }
 
                         }
@@ -245,7 +278,7 @@ refTracker.provider('refCache', function() {
                         // now we can cleanup unused references from refCache (if they are still present)
                         angular.forEach(cache, function(cacheEntry, id) {
                             if (cacheEntry.refCount==0) {
-                                $log.debug('cleanup unused reference',
+                                $log.debug('provider:refTracker', 'cleanup unused reference',
                                     id, cacheEntry.reference, 'with refcount', cacheEntry.refCount);
                                 delete cache[id];
                             }
@@ -313,6 +346,8 @@ refTracker.factory('ManagedScope', ['refCache',
              * @param object {object|object[]} Newly created object joined to already managed reference
              */
             this.add = function(object) {
+                referenced.push(object);
+
                 return refCache.addReference(object);
             };
 
