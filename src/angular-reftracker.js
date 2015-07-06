@@ -256,6 +256,7 @@ refTracker.provider('refCache', function() {
                  * @param callback {function} function(object, event) triggered on managed reference of object. Null
                  *                            assumes default behavior which is copy the event properties to the managed
                  *                            object reference using extendFunc.
+                 * @return {boolean} True if the reference entity has been found in refCache, false otherwise
                  */
                 this.async = function(identity, event, callback) {
                     callback = callback || function(object, event) {
@@ -283,7 +284,11 @@ refTracker.provider('refCache', function() {
                                 delete cache[id];
                             }
                         });
+
+                        return true;
                     }
+
+                    return false;
                 };
 
                 /**
@@ -326,6 +331,7 @@ refTracker.factory('ManagedScope', ['refCache',
              * Creates new object reference and adds it to the $scope as $scope.propName
              * @param propName {string} Scope property name
              * @param object {object|object[]} Object to add
+             * @return {object} Managed object
              */
             this.set = function(propName, object) {
                 // remove already existing references of previous value
@@ -337,6 +343,8 @@ refTracker.factory('ManagedScope', ['refCache',
                 referenced.push(object); // add to referenced objects
 
                 $scope[propName] = object;
+
+                return object;
             };
 
             /**
