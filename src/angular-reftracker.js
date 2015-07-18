@@ -1,5 +1,5 @@
 /**
- * Angular Reftracker
+ * Angular Reftracker 2.0
  *
  * Copyright (c) 2014 l0co
  *
@@ -46,6 +46,9 @@ refTracker.provider('refCache', function() {
     // default object extend function
     var extendFunc = angular.extend;
 
+    // whether should log into console trace logs from recursive objects scan
+    var trace = false;
+
     /**
      * Update id resolver
      * @param {function} func function(object) returning unique string id of the object, or null if the object
@@ -63,6 +66,13 @@ refTracker.provider('refCache', function() {
         extendFunc = func;
     };
 
+    /**
+     * Enables/disables trace logs
+     */
+    this.enableTrace = function(enable) {
+        trace = enable;
+    };
+
     this.$get = ['$log',
         function($log) {
             return new function RefCache() {
@@ -71,7 +81,7 @@ refTracker.provider('refCache', function() {
 
                 function CacheEntry(id) {
                     this.id = id;
-                    this.refCount = 0;
+                    this.scopes = {};
                     this.reference = null;
                 }
 
@@ -100,22 +110,29 @@ refTracker.provider('refCache', function() {
                 };
 
                 /**
-                 * Scans object/array recursively to look for references
-                 * @param object Base object
-                 * @param operation 'add', 'remove', 'remove-soft'
-                 * @param visited {object[]} Visited objects
-                 * @param visitedIds {object} Visited ids
-                 * @return {*}
+                 * Adds object recursively to the reference cache
+                 * @param object {object,object[]} Object or array to add
+                 * @param scopeId {number|object} Related scope id or null
+                 * @param visitedIds {object} For internal recursive usage
                  */
-                function scanR(object, operation, visited, visitedIds) {
-                    visited = visited || [];
+                function addR(object, scopeId, visitedIds) {
                     visitedIds = visitedIds || {};
+
+                    // this function will fill scopes for cache entry depending on scopeId
+                    function fillScopes(cacheEntry) {
+                        if (typeof(scopeId) != 'object')
+                            cacheEntry.scopes[scopeId] = true;
+                        else
+                            angular.forEach(scopeId, function(value, key) {
+                                cacheEntry.scopes[key] = true;
+                            });
+                    }
 
                     // array part
                     if (isArray(object)) {
                         var array = [];
                         angular.forEach(object, function(o) {
-                            array.push(scanR(o, operation, visited, visitedIds));
+                            array.push(addR(o, scopeId, visitedIds));
                         });
                         return array;
                     }
@@ -129,98 +146,101 @@ refTracker.provider('refCache', function() {
                     // if no id is resolved so far, we need proceed with recursive scan, but we won't track this
                     // object as a reference
 
-                    // This is a little tricky, when json comes from the server and we have 'add' operation, we allow
-                    // to add more same identity objects if they are present in json (eg. entity may go twice), but we
-                    // shouldn't increase the refcounter for the reference added second time. This is because all these
-                    // references will be then merged into a single one, and on 'remove' operation removed once.
-                    var increaseCounter = true;
-                    if (id) {
-                        if (visitedIds[id] && operation == 'add')
-                            increaseCounter = false;
+                    var cacheEntry = id ? cache[id] : null;
+
+                    if (cacheEntry && id && visitedIds[id])
+                        return cacheEntry.reference;
+                    else
                         visitedIds[id] = true;
+
+                    // add new reference
+                    if (!cacheEntry && id) {
+                        // object not in cache
+                        cacheEntry = new CacheEntry(id);
+                        cacheEntry.reference = object;
+                        cache[id] = cacheEntry;
+                    } else if (cacheEntry && !scopeId) {
+                        // object in cache but no scope provided (async) - load scopes from the object
+                        // that is already in cache (but only top level object)
+                        scopeId = angular.extend({}, cacheEntry.scopes);
                     }
 
-                    if (visited.indexOf(object)==-1) {
-                        visited.push(object);
-                        var cacheEntry = id ? cache[id] : null;
+                    var ref = object;
 
-                        if (operation == 'add') {
-
-                            // add new reference
-
-                            if (!cacheEntry && id) {
-                                // object not in cache
-                                cacheEntry = new CacheEntry(id);
-                                cacheEntry.reference = object;
-                                cache[id] = cacheEntry;
-                            }
-
-                            var ref = object;
-                            if (cacheEntry) {
-                                if (increaseCounter)
-                                    cacheEntry.refCount++;
-                                ref = cacheEntry.reference;
-                                extendFunc(ref, object);
-                            }
-
-                            for (var prop in ref)
-                                if (prop.substr(0,1)!='$') // skip special properties
-                                    ref[prop] = scanR(ref[prop], operation, visited, visitedIds);
-
-                            if (cacheEntry) {
-                                if (increaseCounter)
-                                    $log.debug('provider:refTracker', 'new object', id, ref, 'with refcount', cacheEntry.refCount);
-                                else
-                                    $log.debug('provider:refTracker', 'update object', id, ref, 'with refcount', cacheEntry.refCount);
-                            }
-
-                            return ref;
-
-                        } else if (operation == 'remove' || operation == 'remove-soft') {
-
-                            // remove reference
-
-                            if (cacheEntry) {
-                                cacheEntry.refCount--;
-
-                                $log.debug('provider:refTracker', operation=='remove' ? 'remove object' : 'remove softly',
-                                    id, cacheEntry.reference, 'with refcount', cacheEntry.refCount);
-
-                                // do not remove overall entry yet on remove-soft operation (pre-update operation)
-                                if (cacheEntry.refCount<=0 && operation!='remove-soft') {
-                                    delete cache[id];
-                                }
-
-                                for (var prop in cacheEntry.reference)
-                                    if (prop.substr(0,1)!='$') // skip special properties
-                                        scanR(cacheEntry.reference[prop], operation, visited, visitedIds);
-                            }
-
-                        }
+                    if (cacheEntry) {
+                        fillScopes(cacheEntry);
+                        ref = cacheEntry.reference;
+                        extendFunc(ref, object);
                     }
 
-                    return object;
+                    for (var prop in ref)
+                        if (prop.substr(0, 1) != '$') // skip special properties
+                            ref[prop] = addR(ref[prop], scopeId, visitedIds);
+
+                    if (trace && cacheEntry)
+                        $log.debug('provider:refTracker', 'scope', scopeId, 'update object', id, ref, 'with refcount',
+                            Object.keys(cacheEntry.scopes).length);
+
+                    return ref;
                 }
 
                 /**
-                 * Adds new object reference to cache
-                 * @param {object} object Object to add (will be added recursively)
-                 * @returns {object} referenced object
+                 * Removes objects references related to the scope
+                 * @param scopeId {string} Related scope id
                  */
-                this.addReference = function(object) {
-                    if (!isObjectOrArray(object))
-                        return object;
-                    return scanR(object, 'add');
+                this.cleanup = function(scopeId) {
+                    $log.debug('provider:refTracker', 'beginning scope', scopeId, 'cleanup with cache size',
+                        Object.keys(cache).length);
+
+                    angular.forEach(cache, function(cacheEntry, id) {
+
+                        if (cacheEntry.scopes[scopeId]) { // this object belongs to scope being removed
+
+                            if (trace)
+                                $log.debug('provider:refTracker', 'scope', scopeId, 'remove object reference', id,
+                                    cacheEntry.reference, 'with refcount', Object.keys(cacheEntry.scopes).length,
+                                    Object.keys(cacheEntry.scopes).length==1 ? '(cleanup)' : '(preserve)');
+
+                            delete cacheEntry.scopes[scopeId];
+
+                            if (!Object.keys(cacheEntry.scopes).length)
+                                delete cache[id];
+                        }
+
+                    });
+
+                    $log.debug('provider:refTracker', 'finishing scope', scopeId, 'cleanup with cache size',
+                        Object.keys(cache).length);
                 };
 
                 /**
-                 * Removes the object reference from cache
-                 * @param {object} object Object to remove (will be removed recursively)
+                 * Adds new object reference to cache
+                 * @param object {object} Object to add (will be added recursively)
+                 * @param scopeId {string} Related scope id
+                 * @returns {object} referenced object
                  */
-                this.removeReference = function(object) {
+                this.addReference = function(object, scopeId) {
+                    var objectInfo = isArray(object) ? 'array with '+object.length+' elements' : object;
+
+                    if (scopeId)
+                        $log.debug('provider:refTracker', 'beginning add reference', objectInfo, 'to scope', scopeId,
+                            'with cache size', Object.keys(cache).length);
+                    else
+                        $log.debug('provider:refTracker', 'beginning add reference', objectInfo, 'to existing scopes',
+                            'with cache size', Object.keys(cache).length);
+
                     if (!isObjectOrArray(object))
-                        return;
-                    scanR(object, 'remove');
+                        return object;
+                    var ret = addR(object, scopeId);
+
+                    if (scopeId)
+                        $log.debug('provider:refTracker', 'finishing add reference', objectInfo, 'to scope', scopeId,
+                            'with cache size', Object.keys(cache).length);
+                    else
+                        $log.debug('provider:refTracker', 'finishing add reference', objectInfo, 'to existing scopes',
+                            'with cache size', Object.keys(cache).length);
+
+                    return ret;
                 };
 
                 /**
@@ -267,23 +287,11 @@ refTracker.provider('refCache', function() {
 
                     var ref = this.findReference(identity);
                     if (ref) {
-                        // we now have the entry to update in refCache, firstly we will softly remove its references
-                        scanR(ref, 'remove-soft');
-
                         // now we may extend the referenced object with new data
                         callback(ref, event);
 
-                        // and re-join object to the refCache
+                        // and add extended object to the cache again
                         this.addReference(ref);
-
-                        // now we can cleanup unused references from refCache (if they are still present)
-                        angular.forEach(cache, function(cacheEntry, id) {
-                            if (cacheEntry.refCount==0) {
-                                $log.debug('provider:refTracker', 'cleanup unused reference',
-                                    id, cacheEntry.reference, 'with refcount', cacheEntry.refCount);
-                                delete cache[id];
-                            }
-                        });
 
                         return true;
                     }
@@ -316,16 +324,6 @@ refTracker.factory('ManagedScope', ['refCache',
          * @param {object} $scope scope to join
          */
         return function ManagedScope($scope) {
-            var referenced = [];
-
-            function removeFromReferenced(object) {
-                // find out if the object is already referenced
-                var idx = referenced.indexOf(object);
-                if (idx>-1) {
-                    refCache.removeReference(object); // remove from referenced objects
-                    referenced.splice(idx, 1);
-                }
-            }
 
             /**
              * Creates new object reference and adds it to the $scope as $scope.propName
@@ -334,49 +332,16 @@ refTracker.factory('ManagedScope', ['refCache',
              * @return {object} Managed object
              */
             this.set = function(propName, object) {
-                // remove already existing references of previous value
-                if ($scope[propName])
-                    removeFromReferenced($scope[propName]);
-
-
-                object = refCache.addReference(object);
-                referenced.push(object); // add to referenced objects
-
+                object = refCache.addReference(object, $scope.$id);
                 $scope[propName] = object;
-
                 return object;
-            };
-
-            /**
-             * This function needs to be called if you join new object not to the scope directly (for that is set()),
-             * but to the object already set in managed scope and tracked by reftracker. If such new reference
-             * is created in existing object, this function adds new reference to the object withing the scope.
-             * @param object {object|object[]} Newly created object joined to already managed reference
-             */
-            this.add = function(object) {
-                referenced.push(object);
-
-                return refCache.addReference(object);
-            };
-
-            /**
-             * This function needs to be called if you remove new object from the managed scope either it's
-             * direct scope object, or is removed from already managed object structure.
-             * @param object {object|object[]} Object removed from scope or already managed reference
-             */
-            this.remove = function(object) {
-                removeFromReferenced(object);
-                return refCache.removeReference(object);
             };
 
             /**
              * refCache cleanup function on scope destroy
              */
             $scope.$on('$destroy', function() {
-                angular.forEach(referenced, function(object) {
-                    refCache.removeReference(object);
-                });
-                referenced = [];
+                refCache.cleanup($scope.$id);
             });
         }
 

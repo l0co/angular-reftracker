@@ -1,6 +1,11 @@
 angular-reftracker
 ==================
 
+Please note that this documentation concerns 1.0 version and is currently outdated for 2.0,
+which is a complete reimplementation of concepts and uses scope id watching instead of counting object references.
+There are some very complex usages with async update that appeared in my current project,
+that cannot be supported by calculating object references, and 2.0 implementation gets rid of all of them.
+
 ## The motivation
 
 I found it useful to design angular applications with domain driven backend in the way that I reuse the same JSON object references across all views/subpages/scopes. This gives a lot of simplicity in the code and allows the app to be really responsive. Here is the simple example:
