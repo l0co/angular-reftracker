@@ -338,6 +338,16 @@ refTracker.factory('ManagedScope', ['refCache',
             };
 
             /**
+             * This function needs to be called if you join new object not to the scope directly (for that is set()),
+             * but to the object already set in managed scope and tracked by reftracker. If such new reference
+             * is created in existing object, this function adds new reference to the object withing the scope.
+             * @param object {object|object[]} Newly created object joined to already managed reference
+             */
+            this.add = function(object) {
+                return refCache.addReference(object, $scope.$id);
+            };
+
+            /**
              * refCache cleanup function on scope destroy
              */
             $scope.$on('$destroy', function() {
