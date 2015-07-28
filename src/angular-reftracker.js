@@ -148,10 +148,12 @@ refTracker.provider('refCache', function() {
 
                     var cacheEntry = id ? cache[id] : null;
 
-                    if (cacheEntry && id && visitedIds[id])
-                        return cacheEntry.reference;
-                    else
-                        visitedIds[id] = true;
+                    if (cacheEntry && id && visitedIds[id]) {
+                        if (visitedIds[id].indexOf(object)>-1)
+                            return cacheEntry.reference;
+                        visitedIds[id].push(object);
+                    } else
+                        visitedIds[id] = [object];
 
                     // add new reference
                     if (!cacheEntry && id) {
